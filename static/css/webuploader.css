@@ -1,0 +1,59 @@
+.webuploader-container {
+  position: relative;
+}
+
+.webuploader-element-invisible {
+  position: absolute !important;
+  clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+  clip: rect(1px, 1px, 1px, 1px);
+}
+
+.webuploader-pick {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  background: #00b7ee;
+  padding: 0px 0px;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  text-align: center;
+  border-radius: 0px 5px 5px 0px;
+  overflow: hidden;
+}
+
+.webuploader-pick-hover {
+  background: #00a2d4;
+}
+
+.webuploader-pick-disable {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.progress-main {
+  font-size: 9pt;
+  color: #aaaaaa;
+  width: 100px;
+  height: 100%;
+  float: right;
+  padding-left: 5px;
+  box-sizing: border-box;
+}
+
+.progress {
+  border: 1px solid #aaaaaa;
+  width: 100%;
+  height: 100%;
+  float: right;
+  text-align: center;
+}
+
+.progress-bar {
+  position: relative;
+  top: -35px;
+  background-color: #00b83f;
+  filter: alpha(opacity=50);
+  opacity: 0.5;
+  -moz-opacity: 0.5;
+}

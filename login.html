@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+    <meta http-equiv="Content-Type" type="text/html" charset="utf-8">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="Cache" content="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <!--<meta http-equiv="X-UA-Compatible" content="IE=9"/>-->
+		<title></title>
+    <!--此注释不允许修改，<-LoginPage->这条注释是用于vue-resource判断是否需要登陆的标签-->
+		<link rel="stylesheet" href="css/login.css" />
+	</head>
+	<body>
+		<div class="login-base">
+			<div class="login-top"><div class="login-header"></div></div>
+			<div class="login-mid">
+				<div class="login-mian">
+					<form class="form" style="padding-top: 0px;">
+						<div class="fl">
+							<div>
+								<label for="" style="letter-spacing: 0.7px;">用户名：</label>
+								<input type="text" class="loginName" placeholder="请输入用户名" name="username" />
+							</div>
+							<div>
+								<label for="">密&nbsp;&nbsp;&nbsp;&nbsp;码：</label>
+								<input type="password" class="loginPsw" placeholder="请输入密码" name="password"/>
+							</div>
+              <div>
+                <label style="letter-spacing: 0.7px;">验证码：</label>
+                <input id="identifyCode" type="text" style="width: 85px;" class="loginName" placeholder="输入验证码"/>
+                <img id="code" src="./restful/user/generateCode"
+                     style="position: absolute;margin-left:3px;cursor: pointer;border:1px solid #5cadff;">
+              </div>
+							<p class="errorMsg" style="width: 300px"></p>
+						</div>
+						<div class="fr" style="margin-top:15px;"><button class="loginBtn"></button></div>
+					</form>
+
+				</div>
+			</div>
+		</div>
+	</body>
+	<script src="js/jquery-2.2.4.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="js/login.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+
+	</script>
+
+</html>

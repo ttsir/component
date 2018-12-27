@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" type="text/html" charset="utf-8">
+  <meta http-equiv="Expires" content="0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Cache-control" content="no-cache">
+  <meta http-equiv="Cache" content="no-cache">
+  <meta http-equiv="X-UA-Compatible" content="IE=9"/>
+  <title>Img Uploader</title>
+
+  <!--引入CSS-->
+  <link rel="stylesheet" type="text/css" href="css/iconfont.css">
+
+  <!--引入JS-->
+  <script type="text/javascript" src="js/jquery-2.2.4.js"></script>
+  <script type="text/javascript" src="js/vue.js"></script>
+  <script type="text/javascript" src="js/console.js"></script>
+  <script type="text/javascript" src="js/webuploader.js"></script>
+
+  <style>
+    body, ul, li, dl, dt, dd, p, ol, h1, h2, h3, h4, h5, h6, form, img, table, fieldset, legend {
+      margin: 0;
+      padding: 0;
+    }
+
+    ul, li, ol {
+      list-style: none;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      font-family: 'iconfont';
+    }
+
+    .icon-base {
+      border-radius: 6px;
+      width: 100%;
+      height: 100%;
+    }
+
+    #app:hover {
+      background-color: #eeeeee;
+      -webkit-transition: background-color .5s;
+      -moz-transition: background-color .5s;
+      -ms-transition: background-color .5s;
+      -o-transition: background-color .5s;
+      transition: background-color .5s;
+    }
+
+    /*.webuploader-pick-hover{
+      background-color: #eeeeee;
+      -webkit-transition: background-color .5s;
+      -moz-transition: background-color .5s;
+      -ms-transition: background-color .5s;
+      -o-transition: background-color .5s;
+      transition: background-color .5s;
+    }*/
+
+    .webuploader-element-invisible {
+      display: none;
+    }
+
+    .icon-fangdajing:hover, .icon-trash:hover {
+      background-color: #333333;
+      opacity: 0.5;
+      cursor: pointer;
+      color: #00a0e9;
+      border: 1px solid #cccccc;
+    }
+
+    .icon-fangdajing, .icon-trash {
+      border: 1px solid rgba(0, 0, 0, 0);
+    }
+
+    .icon-btn {
+      box-sizing: border-box;
+      border: 1px dashed #c0ccda;
+    }
+
+    .icon-btn:hover {
+      border-color: #409eff;
+    }
+
+    .icon-add-btn {
+      cursor: pointer;
+      color: #8c939d;
+      text-align: center;
+    }
+
+    .icon-btn-layer {
+      position: relative;
+      top: -100%;
+      background-color: #333333;
+      opacity: 0.5;
+    }
+
+    .icon-btn-layer-bar {
+      position: relative;
+      top: -200%;
+      text-align: center;
+      font-size: 18pt;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+<div id="app" :style="{width:width + 'px',height:height + 'px',overflow:'hidden'}">
+  <ul v-if="!multiple" class="icon-base icon-btn" @mouseleave="showImgBtn = false"
+      style="">
+    <li class="icon-base">
+      <span id="picker"
+            class="icon-base icon-add-btn"
+            :style="{lineHeight: lineHeight + 'px',fontSize:addBtnFontSize}">&#xe613</span>
+      <div v-if="showImg" style="position:relative;top:-100%;width:100%;height:100%;">
+        <img :src="url" class="icon-base" @mouseenter="showImgBtn = true"/>
+      </div>
+    </li>
+
+    <template v-if="showImgBtn">
+      <li class="icon-base icon-btn-layer"></li>
+      <li class="icon-base icon-btn-layer-bar"
+          :style="{lineHeight: lineHeight + 'px',fontSize:actionBtnFontSize}">
+        <span class="icon-fangdajing" @click="imgView()"
+              :style="{marginRight:actionBtnMargin,padding:actionBtnPadding}"></span><span
+        class="icon-trash" @click="remove()" :style="{padding:actionBtnPadding}"></span>
+      </li>
+    </template>
+  </ul>
+
+  <ul v-else class="icon-base icon-btn">
+    <li class="icon-base">
+      <span id="picker"
+            class="icon-base icon-add-btn"
+            :style="{lineHeight: lineHeight + 'px',fontSize:addBtnFontSize}">&#xe613</span>
+    </li>
+  </ul>
+
+</div>
+
+<script>
+  var parentVm;
+  var app;
+  var removeCallback;
+
+  function initFromParent(pvm, callback) {
+    parentVm = pvm;
+    removeCallback = parentVm.removeAll;
+    var files = parentVm.files;
+    var multiple = parentVm.multiple;
+
+    if (files && files.length > 0
+      && multiple == false) {
+      app.url = files[0].url;
+      app.name = files[0].name;
+      app.fileSize = files[0].fileSize;
+    }
+  }
+
+  function addFile(fileInfo) {
+    if (parentVm && parentVm.files) {
+      fileInfo.showImgBtn = false;
+      parentVm.files.push(fileInfo);
+    }
+  }
+
+  function removeFile() {
+    if (removeCallback) {
+      removeCallback();
+    }
+  }
+
+  jQuery(function () {
+    function getUrlParam(name) {
+      var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+      var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+
+      if (r != null) {
+        return decodeURIComponent(r[2])
+      } else {
+        return null; //返回参数值
+      }
+    }
+
+    var multiple = getUrlParam("multiple");
+    var width = getUrlParam("width");
+    var height = getUrlParam("height");
+    width = width == null ? 150 : parseInt(width);
+    height = height == null ? 150 : parseInt(height);
+    var lineHeight = height - 2;
+    var addBtnFontSize = "30pt";
+    var actionBtnFontSize = "18pt";
+    var actionBtnPadding = "5px";
+    var actionBtnMargin = "10px";
+
+    if (multiple && multiple == "true") {
+      multiple = true;
+    } else {
+      multiple = false;
+    }
+
+    if (width <= 50) {
+      addBtnFontSize = "14pt";
+      actionBtnFontSize = "12pt";
+      actionBtnPadding = "2px";
+      actionBtnMargin = "2px";
+    } else if (width > 50 && width <= 120) {
+      addBtnFontSize = "20pt";
+      actionBtnFontSize = "18pt";
+      actionBtnPadding = "5px";
+      actionBtnMargin = "5px";
+    } else if (width > 120 && width <= 200) {
+      addBtnFontSize = "30pt";
+      actionBtnFontSize = "24pt";
+      actionBtnPadding = "8px";
+      actionBtnMargin = "8px";
+    } else if (width > 200 && width <= 300) {
+      addBtnFontSize = "40pt";
+      actionBtnFontSize = "30pt";
+      actionBtnPadding = "10px";
+      actionBtnMargin = "15px";
+    } else if (width > 300 && width <= 500) {
+      addBtnFontSize = "80pt";
+      actionBtnFontSize = "40pt";
+      actionBtnPadding = "20px";
+      actionBtnMargin = "30px";
+    }
+
+    var sysOptions = {
+      multiple: multiple,    // 为true表示允许一次提交多个文件， 为false表示一次只允许提交一个文件，当再次选择文件时会将之前选择的文件覆盖掉
+      maxFileCount: 50       // 允许上传的文件个数
+    }
+
+    app = new Vue({
+      el: '#app',
+      data: {
+        multiple: sysOptions.multiple,
+        files: [],
+        url: '',
+        name: '',
+        fileSize: '',
+        showImg: false,
+        showImgBtn: false,
+        width: width,
+        height: height,
+        lineHeight: lineHeight,
+        addBtnFontSize: addBtnFontSize,
+        actionBtnFontSize: actionBtnFontSize,
+        actionBtnPadding: actionBtnPadding,
+        actionBtnMargin: actionBtnMargin
+      },
+      methods: {
+        uploaded: function (url) {
+          this.url = url
+        },
+        remove: function () {
+          this.url = "";
+          this.showImgBtn = false;
+          uploader.reset();
+
+          if (removeFile) {
+            removeFile();
+          }
+        },
+        imgView: function () {
+          this.showImgBtn = false;
+          parentVm.showImg({
+            name: this.name,
+            fileSize: this.fileSize,
+            url: this.url
+          });
+        }
+      },
+      watch: {
+        url: function (newValue, oldValue) {
+          if (newValue != "") {
+            this.showImg = true;
+          } else {
+            this.showImg = false;
+          }
+        }
+      }
+    });
+
+    app.fileMap = {};
+    var uploader;
+
+    function initFileInfo(file) {
+      return {
+        id: file.id,
+        name: file.name,
+        percent: 0,
+        size: file.size,
+        type: file.type,
+        lastModifiedDate: file.lastModifiedDate,
+        md5: "",
+        uploaded: false,
+        uploadFileId: "",
+        progressStyle: {
+          width: "0%"
+        }
+      };
+    }
+
+    /***************************************************** 监听分块上传过程中的三个时间点 start ***********************************************************/
+    WebUploader.Uploader.register({
+      "before-send-file": "beforeSendFile",//整个文件上传前
+      "before-send": "beforeSend",  //每个分片上传前
+      "after-send-file": "afterSendFile"  //分片上传完毕
+    }, {
+      /**时间点1：所有文件进行上传之前调用此函数*/
+      beforeSendFile: function (file) {
+        var deferred = WebUploader.Deferred();
+        var fileInfo = initFileInfo(file);
+
+        app.fileMap[file.id] = fileInfo;
+
+        /**
+         * 计算文件的唯一标记fileMd5，用于断点续传
+         * 如果.md5File(file)方法里只写一个file参数则计算MD5值会很慢 所以加了后面的参数：10*1024*1024
+         * 即只根据文件的部分值进行MD5值的计算，可靠性没有全文件计算的高
+         */
+        uploader
+          .md5File(file, 0, 10 * 1024 * 1024)
+          .progress(function (percentage) {
+            fileInfo.percent = Math.round(percentage * 100);
+          })
+          .then(function (md5) {
+            file.md5 = md5;
+            fileInfo.md5 = md5;
+
+            //在后台校验文件是否已上传过，已上传完成则返回文件编码，部分上传完成则返回上传到哪一个分片，以及上传进度值
+            $.ajax({
+              type: "POST",
+              url: "restful/fileUpload/checkFile",  //先检查该文件是否上传过，如果上传过，上传进度是多少
+              data: JSON.stringify({
+                fileName: fileInfo.name,  //文件名
+                md5: fileInfo.md5,
+                size: fileInfo.size
+              }),
+              cache: false,
+              contentType: "application/json; charset=utf-8",
+              dataType: "json",
+              success: function (response) {
+                if (response.status == "success") {
+                  var content = response.content;
+
+                  if (content.isExist) {
+                    //将该文件的状态设置为已上传完成
+                    fileInfo.percent = 100;
+                    fileInfo.progressStyle.width = "100%";
+                    fileInfo.uploaded = true;
+                    fileInfo.url = content.url;
+                    fileInfo.uploadFileId = content.uploadFileId;
+
+                    app.uploaded(fileInfo.url);
+                    uploader.skipFile(file);  //如果这个文件已存在则跳过
+
+                    addFile({
+                      name: fileInfo.name,
+                      fileSize: fileInfo.size,
+                      url: fileInfo.url
+                    });
+                  } else {
+                    fileInfo.percent = content.percent;
+                    fileInfo.progressStyle.width = content.percent + "%";
+                  }
+
+                  //获取文件信息后进入下一步
+                  deferred.resolve();
+                } else {
+                  uploader.stop(true); //中断上传任务
+                  deferred.reject();
+                }
+              }
+            });
+          });
+
+        return deferred.promise();
+      },
+      /**时间点2：如果有分块上传，则每个分块上传之前调用此函数*/
+      beforeSend: function (block) {
+        var deferred = WebUploader.Deferred();
+        var fileInfo = app.fileMap[block.file.id];
+
+        $.ajax({
+          type: "POST",
+          url: "restful/fileUpload/checkChunk",  //ajax验证每一个分片
+          data: JSON.stringify({
+            fileName: fileInfo.name,            //文件的名称
+            filePercent: fileInfo.percent,      // 文件的上传进度百分比
+            fileMd5: fileInfo.md5,              // 文件的md5值
+            fileSize: fileInfo.size,            // 文件的大小
+            chunkNum: block.chunk,              // 当前分块下标
+            chunkTotal: block.chunks,           // 总分块数
+            chunkSize: block.end - block.start  //当前分块大小
+          }),
+          contentType: "application/json; charset=utf-8",
+          dataType: "json",
+          success: function (response) {
+            if (response.status == "success") {
+              var content = response.content;
+
+              if (content.isExist) {
+                //分块存在，跳过
+                deferred.reject();
+              } else {
+                //分块不存在或不完整，重新发送该分块内容
+                deferred.resolve();
+              }
+            } else {
+              alert(response.content.message);
+              uploader.stop(true); //中断上传任务
+              deferred.reject();
+            }
+          }
+        });
+
+        return deferred.promise();
+      },
+      /**时间点3：所有分块上传成功后调用此函数*/
+      afterSendFile: function (file) {
+        var fileInfo = app.fileMap[file.id];
+
+        if (fileInfo.uploaded) {
+          return;
+        }
+
+        var deferred = WebUploader.Deferred();
+
+        //如果分块上传成功，则通知后台合并分块
+        $.ajax({
+          type: "POST",
+          url: "restful/fileUpload/mergeChunk",  //ajax将所有片段合并成整体
+          data: JSON.stringify({
+            fileName: fileInfo.name,
+            fileMd5: fileInfo.md5,
+            fileSize: fileInfo.size,
+            fileType: fileInfo.type
+          }),
+          contentType: "application/json; charset=utf-8",
+          dataType: "json",
+          success: function (response) {
+            if (response.status == "success") {
+              fileInfo.uploaded = true;
+              fileInfo.url = response.content.url;
+              app.uploaded(fileInfo.url);
+
+              addFile({
+                name: fileInfo.name,
+                fileSize: fileInfo.size,
+                url: fileInfo.url
+              });
+
+              deferred.resolve();
+            } else {
+              alert(response.content.message);
+              uploader.stop(true); //中断上传任务
+              deferred.reject();
+            }
+          }
+        });
+
+        return deferred.promise();
+      }
+    });
+    /***************************************************** 监听分块上传过程中的三个时间点 end **************************************************************/
+
+    /************************************************************ 初始化WebUploader start ******************************************************************/
+    var uploaderOptions = {
+      auto: true,                  // 选择文件后是否自动上传
+      chunked: true,                // 开启分片上传
+      chunkSize: 10 * 1024 * 1024,  // 单个分片文件的大小为10M
+      chunkRetry: 3,                // 如果某个分片由于网络问题出错，允许自动重传多少次
+      threads: 3,                   // 上传并发数。允许同时最大上传进程数[默认值：3]
+      duplicate: true,              // 是否重复上传（同时选择多个一样的文件），true可以重复上传
+      prepareNextFile: true,        // 上传当前分片时预处理下一分片
+      swf: 'js/Uploader.swf',       // swf文件路径
+      server: 'restful/fileUpload/uploadChunk',// 文件接收服务端
+      fileSizeLimit: 100 * 1024 * 1024 * 1024,        // 100G 验证文件总大小是否超出限制, 超出则不允许加入队列
+      fileSingleSizeLimit: 10 * 1024 * 1024 * 1024,   // 10G 验证单个文件大小是否超出限制, 超出则不允许加入队列
+      pick: {
+        id: '#picker',  //这个id是你要点击上传文件按钮的外层div的id
+        multiple: sysOptions.multiple //true表示可以在文件选择窗口一次选择多个文件
+      },
+      resize: false,    //不压缩image, 默认如果是jpeg，文件上传前会先压缩再上传！
+      accept: {
+        //允许上传的文件后缀，不带点，多个用逗号分割
+        extensions: "gif,jpg,jpeg,bmp,png",
+        //限制mimeType, 在chrome浏览器上限制mimetype时打开文件选择器非常慢，故将该限制注释掉
+        mimeTypes: 'image/*'
+      }
+    };
+
+    uploader = WebUploader.create(uploaderOptions);
+    /************************************************************ 初始化WebUploader end ********************************************************************/
+
+    /**
+     * 当文件被加入到传输队列时调用，方便对进行相应的校验处理
+     */
+    uploader.on('beforeFileQueued', function (file) {
+      if (!sysOptions.multiple) {
+        //系统不允许上传多个文件
+        uploader.reset();　//重置文件队列
+        app.files = [];
+      } else if (uploader.getFiles().length >= sysOptions.maxFileCount) {
+        alert("一次上传文件个数不过超过系统限制的最大值("
+          + sysOptions.maxFileCount + "个)")
+
+        return false;
+      }
+
+      //限制单个文件的大小 超出了进行提示
+      if (file.size > uploaderOptions.fileSingleSizeLimit) {
+        alert("单个文件大小不能超过系统限制的最大值("
+          + (uploaderOptions.fileSingleSizeLimit / (1024 * 1024 * 1024)) + "G)");
+
+        return false;
+      }
+    })
+
+    /**
+     * 当有文件被添加进队列的时候（点击上传文件按钮，弹出文件选择框，选择完文件点击确定后触发的事件）
+     */
+    uploader.on('fileQueued', function (file) {
+
+    });
+
+    /**
+     * 当某个文件的分块在发送前触发
+     * block: 分块信息
+     * data: 默认的上传参数，可以扩展此对象来控制上传参数
+     * headers:可以扩展此对象来控制上传头部,默认是空对象
+     */
+    uploader.on("uploadBeforeSend", function (block, data, headers) {
+      var fileInfo = app.fileMap[block.file.id];
+
+      if (typeof data.chunk == "undefined") {
+        data.chunk = block.chunk;
+      }
+
+      if (typeof data.chunks == "undefined") {
+        data.chunks = block.chunks;
+      }
+
+      data.fileMd5 = fileInfo.md5;
+      data.percent = fileInfo.percent;
+      data.fileSize = fileInfo.size;
+    });
+
+    /**
+     * 当某个文件的分块上传到服务端响应后，会派送此事件来询问服务端响应是否有效
+     * 如果此事件handler返回值为false, 则此文件将派送server类型的uploadError事件。
+     *
+     * block: 分块信息
+     * rsp: 服务端的返回数据，json格式，如果服务端不是json格式，从ret._raw中取数据，自行解析。
+     */
+    uploader.on("uploadAccept", function (block, rsp) {
+      if (rsp.status == "success") {
+        return true;
+      } else {
+        return false;
+      }
+    })
+
+    /**
+     * 文件上传过程中创建进度条实时显示
+     */
+    uploader.on('uploadProgress', function (file, percentage) {
+      var fileInfo = app.fileMap[file.id];
+      var currentPercent = fileInfo.percent;
+      var percent = Math.round(percentage * 100);
+
+      if (percent > currentPercent) {
+        fileInfo.percent = percent;
+        fileInfo.progressStyle.width = percent + "%";
+      }
+    });
+
+    /**
+     * 上传成功后执行的方法
+     */
+    uploader.on('uploadSuccess', function (file) {
+
+    });
+
+    /**
+     * 上传出错后执行的方法
+     * file:File对象
+     * reason:出错的code
+     */
+    uploader.on('uploadError', function (file, reason) {
+      uploader.stop(true);
+      console.log("Upload Error: " + reason);
+    });
+
+    /**
+     * 文件上传成功失败都会走这个方法
+     */
+    uploader.on('uploadComplete', function (file) {
+
+    });
+
+    /**
+     * 发生错误时将错误码输入到控制台方便定位问题
+     */
+    uploader.on('error', function (error, file) {
+      if (file.size == 0) {
+        alert("不允许上传空文件!");
+      } else if (error == 'Q_TYPE_DENIED') {
+        alert("不支持该文件格式!");
+      } else if (error == 'F_DUPLICATE') {
+        alert("文件重复!");
+      } else {
+        alert("发生未知错误，错误码：" + error);
+      }
+    });
+
+    uploader.on('all', function (type) {
+      //console.log("all event listener: type is " + type);
+    });
+  });
+
+</script>
+</body>
+</html>
